@@ -4,77 +4,88 @@ const { Server } = require("socket.io");
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+// ON IMPORTE LE TRADUCTEUR
+const pokemonTools = require('pokemon'); 
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-const PORT = 3000;
 
-// SECRET KEY : Pour que seul ton serveur Minecraft puisse envoyer des infos
-// Tu devras mettre la même clé dans le mod Minecraft plus tard.
+// --- CONFIGURATION ---
+const PORT = process.env.PORT || 3000;
 const API_SECRET = "MON_SUPER_CODE_SECRET_2026"; 
-
-// Base de données simple (Fichier JSON)
 const DB_FILE = 'data.json';
-let capturedPokemon = {};
 
-// Chargement de la sauvegarde au démarrage
+// --- CHARGEMENT DES DONNÉES ---
+let capturedPokemon = {};
 if (fs.existsSync(DB_FILE)) {
-    capturedPokemon = JSON.parse(fs.readFileSync(DB_FILE));
-} else {
-    // Si pas de fichier, on démarre vide
-    fs.writeFileSync(DB_FILE, JSON.stringify({}));
+    try {
+        capturedPokemon = JSON.parse(fs.readFileSync(DB_FILE));
+    } catch (e) {
+        console.error("Erreur de lecture data.json, réinitialisation.");
+        capturedPokemon = {};
+    }
 }
 
-app.use(express.static('public')); // Ton index.html doit être dans un dossier 'public'
 app.use(bodyParser.json());
 
-// 1. QUAND UN JOUEUR SE CONNECTE AU SITE
+// --- ROUTE POUR AFFICHER LE SITE ---
+// On sert index.html directement à la racine
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// --- 1. CONNEXION SOCKET.IO ---
 io.on('connection', (socket) => {
-    console.log('Un visiteur regarde le Pokédex');
-    // On lui envoie immédiatement tout ce qui a déjà été capturé
+    // On envoie la liste actuelle au nouveau visiteur
     socket.emit('init-pokedex', capturedPokemon);
 });
 
-// 2. RECEPTION DE LA CAPTURE (Venant de Minecraft)
+// --- 2. RECEPTION DU MOD (Webhook) ---
 app.post('/webhook/capture', (req, res) => {
-    const { secret, pokemonId, pokemonName, playerName } = req.body;
+    const data = req.body;
 
-    // Sécurité : on vérifie que c'est bien ton serveur qui parle
-    if (secret !== API_SECRET) {
-        return res.status(403).send("Accès interdit : Mauvais code secret !");
+    // 1. Sécurité
+    if (data.secret !== API_SECRET) {
+        console.log("⛔ Tentative d'intrusion (Mauvais secret)");
+        return res.status(403).send("Forbidden");
     }
 
-    console.log(`[CAPTURE] ${playerName} a attrapé ${pokemonName} (#${pokemonId})`);
+    const pokeId = parseInt(data.pokemonId);
+    let finalName = data.pokemonName; // Par défaut, on prend ce que le mod envoie
 
-    // On vérifie si ce Pokémon a déjà été capturé (Premier du serveur ?)
-    if (!capturedPokemon[pokemonId]) {
-        // C'est une NOUVELLE découverte !
-        capturedPokemon[pokemonId] = {
-            id: pokemonId,
-            name: pokemonName,
-            captor: playerName,
-            date: new Date()
+    // 2. TRADUCTION MAGIQUE EN FRANÇAIS 🇫🇷
+    try {
+        // On demande à la librairie : "Donne moi le nom du #6 en français"
+        finalName = pokemonTools.getName(pokeId, 'fr');
+    } catch (err) {
+        console.log("Pas de traduction trouvée pour ID " + pokeId + ", on garde le nom anglais.");
+    }
+
+    console.log(`[CAPTURE] ${data.playerName} a trouvé ${finalName} (#${pokeId})`);
+
+    // 3. Enregistrement (Si nouveau)
+    // Note: Si tu veux que le dernier qui capture écrase le précédent, enlève le "if"
+    if (!capturedPokemon[pokeId]) {
+        
+        capturedPokemon[pokeId] = {
+            id: pokeId,
+            name: finalName, // On sauvegarde le nom en Français !
+            captor: data.playerName,
+            timestamp: Date.now()
         };
 
-        // Sauvegarde dans le fichier (pour ne pas perdre les données si le serveur restart)
+        // Sauvegarde disque
         fs.writeFileSync(DB_FILE, JSON.stringify(capturedPokemon, null, 2));
 
-        // On crie la nouvelle à tout le monde sur le site web
-        io.emit('new-capture', {
-            id: pokemonId,
-            name: pokemonName,
-            captor: playerName
-        });
-    } else {
-        console.log(" -> Déjà connu, on ignore (ou on peut faire une notif différente)");
+        // Notification aux navigateurs
+        io.emit('new-capture', capturedPokemon[pokeId]);
     }
 
-    res.status(200).send("Reçu 5/5");
+    res.status(200).send("Capture traitée");
 });
 
-// Lancement
+// --- LANCEMENT ---
 server.listen(PORT, () => {
-    console.log(`>>> LE POKEDEX EST EN LIGNE SUR LE PORT ${PORT}`);
-    console.log(`>>> Ouvre http://localhost:${PORT} pour voir`);
+    console.log(`🚀 Pokédex Server en ligne sur le port ${PORT}`);
 });
