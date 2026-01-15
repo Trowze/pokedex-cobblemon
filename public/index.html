@@ -230,11 +230,16 @@
             margin-bottom: 10px; text-align: center; border-bottom: 2px solid var(--pokedex-red); padding-bottom: 5px;
         }
 
-        /* NOMS CLIQUABLES */
+        /* --- NOMS CLIQUABLES (MODIFICATION ICI) --- */
         .clickable-name {
-            cursor: pointer; transition: color 0.2s; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.3);
+            cursor: pointer; 
+            transition: color 0.2s; 
+            text-decoration: none !important; /* SUPPRESSION TOTALE DU SOULIGNEMENT */
+            border-bottom: none !important;
         }
-        .clickable-name:hover { color: var(--neon-blue); text-decoration-color: var(--neon-blue); }
+        .clickable-name:hover { 
+            color: var(--neon-blue); 
+        }
 
         .leaderboard-list { flex: 1; }
         .leader-item {
@@ -295,6 +300,7 @@
     </div>
 
     <audio id="audio-shiny" src="https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/1.ogg"></audio> 
+
     <script>
         const totalPokemon = 1025; 
         const grid = document.getElementById('grid');
@@ -441,9 +447,8 @@
         function playSound(pokemonId, isShiny) {
             try {
                 if (isShiny) {
-                    // Son spécial Shiny (J'utilise un son système pour l'exemple, mais remplace src par ton mp3)
-                    // Astuce: On joue le cri + une alerte
-                    const shinyAudio = new Audio('https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/132.ogg'); // Metamorphe (bruit bizarre) en attendant un vrai sparkle
+                    // Son spécial Shiny
+                    const shinyAudio = new Audio('https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/132.ogg'); 
                     shinyAudio.volume = 0.5;
                     shinyAudio.play();
                 } else {
