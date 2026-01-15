@@ -38,7 +38,7 @@
             position: relative;
         }
 
-        /* --- HEADER & CONTROLS --- */
+        /* --- HEADER --- */
         .top-bar {
             height: 60px;
             display: flex;
@@ -85,7 +85,6 @@
             transition: all 0.2s;
         }
         .filter-btn:hover { color: #fff; }
-        
         .filter-btn.active {
             background: var(--screen-bg);
             color: var(--neon-blue);
@@ -96,7 +95,6 @@
             box-shadow: 0 0 10px var(--gold);
         }
 
-        /* INFO FILTRE JOUEUR */
         #player-filter-label {
             display: none;
             background: var(--neon-blue);
@@ -109,6 +107,52 @@
             animation: slideIn 0.3s ease;
         }
         #player-filter-label:hover { background: #fff; }
+
+        .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* --- MIXEUR AUDIO (NOUVEAU) --- */
+        .audio-mixer {
+            display: flex;
+            align-items: center;
+            background: #232323;
+            padding: 5px 10px;
+            border-radius: 30px;
+            border: 2px solid #555;
+            gap: 10px;
+        }
+
+        .mute-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Style de la barre de volume */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 80px;
+            height: 6px;
+            background: #444;
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--neon-blue);
+            cursor: pointer;
+            box-shadow: 0 0 5px var(--neon-blue);
+        }
 
         .search-container input {
             background: #232323;
@@ -164,9 +208,7 @@
             align-items: center;
             height: 120px;
             position: relative;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
-                        border-color 0.2s ease, 
-                        box-shadow 0.2s ease;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.2s ease, box-shadow 0.2s ease;
             cursor: pointer;
         }
 
@@ -217,42 +259,20 @@
         .poke-card.caught .captor-badge { display: block; }
         .poke-card.shiny .captor-badge { border-color: var(--gold); }
 
-        /* --- DROITE --- */
-        .right-column {
-            flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 260px;
-        }
-        .panel {
-            background-color: #333; border-radius: 8px; padding: 10px; border: 2px solid #555;
-            display: flex; flex-direction: column;
-        }
-        .panel-title {
-            color: #fff; font-family: 'Press Start 2P', cursive; font-size: 0.6rem;
-            margin-bottom: 10px; text-align: center; border-bottom: 2px solid var(--pokedex-red); padding-bottom: 5px;
-        }
+        .right-column { flex: 1; display: flex; flex-direction: column; gap: 15px; min-width: 260px; }
+        .panel { background-color: #333; border-radius: 8px; padding: 10px; border: 2px solid #555; display: flex; flex-direction: column; }
+        .panel-title { color: #fff; font-family: 'Press Start 2P', cursive; font-size: 0.6rem; margin-bottom: 10px; text-align: center; border-bottom: 2px solid var(--pokedex-red); padding-bottom: 5px; }
 
-        /* --- NOMS CLIQUABLES (MODIFICATION ICI) --- */
-        .clickable-name {
-            cursor: pointer; 
-            transition: color 0.2s; 
-            text-decoration: none !important; /* SUPPRESSION TOTALE DU SOULIGNEMENT */
-            border-bottom: none !important;
-        }
-        .clickable-name:hover { 
-            color: var(--neon-blue); 
-        }
+        .player-link { cursor: pointer; transition: color 0.2s; text-decoration: none !important; border-bottom: none !important; }
+        .player-link:hover { color: var(--neon-blue); }
 
         .leaderboard-list { flex: 1; }
-        .leader-item {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 5px; margin-bottom: 5px; background: rgba(0,0,0,0.2); border-radius: 4px; color: #fff; font-size: 0.8rem;
-        }
+        .leader-item { display: flex; align-items: center; justify-content: space-between; padding: 5px; margin-bottom: 5px; background: rgba(0,0,0,0.2); border-radius: 4px; color: #fff; font-size: 0.8rem; }
         .leader-rank { font-weight: bold; color: var(--gold); width: 20px; }
         .leader-score { font-family: 'Press Start 2P'; font-size: 0.6rem; color: var(--neon-blue); }
 
         .feed-area { flex: 1; overflow-y: auto; }
-        .feed-item {
-            font-size: 0.75rem; margin-bottom: 6px; color: #bbb; border-left: 2px solid var(--neon-blue); padding-left: 5px;
-        }
+        .feed-item { font-size: 0.75rem; margin-bottom: 6px; color: #bbb; border-left: 2px solid var(--neon-blue); padding-left: 5px; }
         .feed-item b { color: var(--gold); }
 
         @keyframes shinyPulse { from { box-shadow: 0 0 5px var(--gold); } to { box-shadow: 0 0 20px var(--gold); } }
@@ -276,8 +296,15 @@
                 </div>
             </div>
             
-            <div class="search-container">
-                <input type="text" id="search-input" placeholder="RECHERCHE...">
+            <div class="right-controls">
+                <div class="audio-mixer">
+                    <button class="mute-btn" id="music-toggle" title="Musique ON/OFF">🔇</button>
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.1" title="Volume">
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" id="search-input" placeholder="RECHERCHE...">
+                </div>
             </div>
         </div>
 
@@ -299,7 +326,9 @@
         </div>
     </div>
 
-    <audio id="audio-shiny" src="https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/1.ogg"></audio> 
+    <audio id="bg-music" loop>
+        <source src="music.mp3" type="audio/mp3">
+    </audio>
 
     <script>
         const totalPokemon = 1025; 
@@ -310,11 +339,51 @@
         const playerFilterLabel = document.getElementById('player-filter-label');
         const playerFilterNameSpan = document.getElementById('player-filter-name');
 
-        // ETATS
-        let currentMode = 'all'; // 'all' | 'shiny'
-        let currentPlayerFilter = null; // Nom du joueur ou null
+        // --- GESTION MUSIQUE ---
+        const bgMusic = document.getElementById('bg-music');
+        const musicToggle = document.getElementById('music-toggle');
+        const volumeSlider = document.getElementById('volume-slider');
 
-        // 1. INIT
+        // Volume par défaut très bas pour ne pas agressser
+        bgMusic.volume = 0.1; 
+
+        // Gestion Play/Mute
+        musicToggle.addEventListener('click', () => {
+            if (bgMusic.paused) {
+                bgMusic.play().then(() => {
+                    musicToggle.innerText = '🔊';
+                }).catch(e => console.log("Interaction requise pour l'audio"));
+            } else {
+                if (bgMusic.muted) {
+                    bgMusic.muted = false;
+                    musicToggle.innerText = '🔊';
+                } else {
+                    bgMusic.muted = true;
+                    musicToggle.innerText = '🔇';
+                }
+            }
+        });
+
+        // Gestion du Slider
+        volumeSlider.addEventListener('input', (e) => {
+            bgMusic.volume = e.target.value;
+            // Si on touche au volume, on s'assure que le son n'est pas coupé
+            if(bgMusic.muted) {
+                bgMusic.muted = false;
+                musicToggle.innerText = '🔊';
+            }
+            // Si on veut lancer la musique en bougeant le slider si elle est en pause
+            if(bgMusic.paused) {
+                bgMusic.play();
+                musicToggle.innerText = '🔊';
+            }
+        });
+
+        // -----------------------
+
+        let currentMode = 'all'; 
+        let currentPlayerFilter = null; 
+
         function initGrid() {
             const fragment = document.createDocumentFragment();
             for (let i = 1; i <= totalPokemon; i++) {
@@ -334,30 +403,20 @@
             grid.appendChild(fragment);
         }
 
-        // 2. FILTRAGE
         function refreshGrid() {
             const searchVal = searchInput.value.toLowerCase();
             const cards = document.querySelectorAll('.poke-card');
-
             cards.forEach(card => {
                 const name = card.querySelector('.poke-name').innerText.toLowerCase();
                 const id = card.dataset.id;
                 const isShiny = card.classList.contains('shiny');
-                const captor = card.dataset.captor; // On récupère le captureur stocké
-
-                // Filtres
+                const captor = card.dataset.captor;
                 const matchSearch = name.includes(searchVal) || id.includes(searchVal);
                 const matchMode = (currentMode === 'all') || (currentMode === 'shiny' && isShiny);
                 const matchPlayer = !currentPlayerFilter || (captor === currentPlayerFilter);
-
-                if (matchSearch && matchMode && matchPlayer) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                if (matchSearch && matchMode && matchPlayer) card.style.display = 'flex';
+                else card.style.display = 'none';
             });
-
-            // UI Updates
             if (currentPlayerFilter) {
                 playerFilterLabel.style.display = 'block';
                 playerFilterNameSpan.innerText = currentPlayerFilter;
@@ -366,67 +425,35 @@
             }
         }
 
-        // Action: Filtrer par joueur
-        function filterByPlayer(name) {
-            currentPlayerFilter = name;
-            // On force le mode all si on clique sur un joueur, sauf si on est déjà en shiny
-            refreshGrid();
-        }
-
-        // Action: Reset Total
-        function resetFilters() {
-            currentPlayerFilter = null;
-            setMode('all');
-        }
-
+        function filterByPlayer(name) { currentPlayerFilter = name; refreshGrid(); }
+        function resetFilters() { currentPlayerFilter = null; setMode('all'); }
         function setMode(mode) {
             currentMode = mode;
             document.getElementById('btn-all').classList.toggle('active', mode === 'all');
             document.getElementById('btn-shiny').classList.toggle('active', mode === 'shiny');
             refreshGrid();
         }
-
         searchInput.addEventListener('input', refreshGrid);
 
-        // 3. AFFICHAGE
         function updateDisplay(data) {
             const card = document.getElementById(`poke-${data.id}`);
             if(!card) return;
-
             card.classList.remove('unknown');
             card.classList.add('caught');
-            card.dataset.captor = data.captor; // IMPORTANT: On stocke le nom pour le filtre !
-
+            card.dataset.captor = data.captor; 
             if (data.isShiny) card.classList.add('shiny');
-
             card.querySelector('.poke-name').innerText = data.name;
             const badgeContainer = card.querySelector('.captor-badge-container');
-            
-            // Badge cliquable pour filtrer aussi
-            badgeContainer.innerHTML = `
-                <img class="captor-badge" 
-                     src="https://minotar.net/avatar/${data.captor}/50.png" 
-                     title="Capturé par ${data.captor}"
-                     onclick="filterByPlayer('${data.captor}'); event.stopPropagation();">
-            `;
-
+            badgeContainer.innerHTML = `<img class="captor-badge" src="https://minotar.net/avatar/${data.captor}/50.png" title="Capturé par ${data.captor}" onclick="filterByPlayer('${data.captor}'); event.stopPropagation();">`;
             if (currentMode === 'shiny' || currentPlayerFilter) refreshGrid();
         }
 
-        // 4. LEADERBOARD
         function updateLeaderboard(leaders) {
             leaderboardDiv.innerHTML = "";
             leaders.forEach((player, index) => {
                 const div = document.createElement('div');
                 div.className = 'leader-item';
-                div.innerHTML = `
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span class="leader-rank">${index + 1}</span>
-                        <img src="https://minotar.net/avatar/${player.name}/20.png" style="border-radius:50%">
-                        <span class="clickable-name" onclick="filterByPlayer('${player.name}')">${player.name}</span>
-                    </div>
-                    <span class="leader-score">${player.score}</span>
-                `;
+                div.innerHTML = `<div style="display:flex; align-items:center; gap:8px;"><span class="leader-rank">${index + 1}</span><img src="https://minotar.net/avatar/${player.name}/20.png" style="border-radius:50%"><span class="player-link" onclick="filterByPlayer('${player.name}')">${player.name}</span></div><span class="leader-score">${player.score}</span>`;
                 leaderboardDiv.appendChild(div);
             });
         }
@@ -435,56 +462,39 @@
             const item = document.createElement('div');
             item.className = 'feed-item';
             const shinyText = data.isShiny ? "✨ SHINY ✨" : "";
-            
-            item.innerHTML = `
-                <b class="clickable-name" onclick="filterByPlayer('${data.captor}')">${data.captor}</b> 
-                a attrapé <b>${data.name}</b> ${shinyText}
-            `;
+            item.innerHTML = `<b class="player-link" onclick="filterByPlayer('${data.captor}')">${data.captor}</b> a attrapé <b>${data.name}</b> ${shinyText}`;
             feed.prepend(item);
         }
 
-        // 5. AUDIO
         function playSound(pokemonId, isShiny) {
             try {
                 if (isShiny) {
-                    // Son spécial Shiny
                     const shinyAudio = new Audio('https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/132.ogg'); 
                     shinyAudio.volume = 0.5;
                     shinyAudio.play();
                 } else {
-                    // Cri officiel du Pokémon
                     const cryUrl = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${pokemonId}.ogg`;
                     const audio = new Audio(cryUrl);
                     audio.volume = 0.3;
                     audio.play();
                 }
-            } catch (e) {
-                console.log("Audio bloqué par le navigateur (interaction requise)", e);
-            }
+            } catch (e) { console.log("Audio bloqué", e); }
         }
 
-        // --- SOCKET.IO ---
         initGrid();
         const socket = io();
-
         socket.on('init-pokedex', (payload) => {
             const { captures, leaderboard } = payload;
-            for (const key in captures) {
-                updateDisplay(captures[key]);
-            }
+            for (const key in captures) updateDisplay(captures[key]);
             updateLeaderboard(leaderboard);
         });
-
         socket.on('new-capture', (payload) => {
             const { pokemon, leaderboard } = payload;
             updateDisplay(pokemon);
             addLog(pokemon);
             updateLeaderboard(leaderboard);
-            
-            // JOUE LE SON !
             playSound(pokemon.id, pokemon.isShiny);
         });
-
     </script>
 </body>
 </html>
