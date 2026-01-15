@@ -5,16 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pokédex Global - Cobblemon Server</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    
     <script src="/socket.io/socket.io.js"></script>
 
     <style>
         :root {
             --pokedex-red: #DC0A2D;
-            --pokedex-dark-red: #89061C;
             --screen-bg: #232323;
             --neon-blue: #00F0FF;
-            --gold: #FFCB05;
+            --gold: #FFD700;
         }
 
         body {
@@ -28,32 +26,34 @@
             overflow: hidden;
         }
 
-        /* --- LE POKEDEX (Boitier) --- */
         .pokedex-device {
             width: 95vw;
             height: 95vh;
             background-color: var(--pokedex-red);
             border-radius: 20px;
-            box-shadow: inset 10px 10px 30px rgba(255,255,255,0.2), inset -10px -10px 30px rgba(0,0,0,0.5), 0 20px 50px rgba(0,0,0,0.5);
+            box-shadow: inset 10px 10px 30px rgba(255,255,255,0.2), inset -10px -10px 30px rgba(0,0,0,0.5);
             display: flex;
             flex-direction: column;
             padding: 20px;
-            box-sizing: border-box;
             position: relative;
         }
 
-        /* --- HEADER --- */
+        /* --- HEADER & CONTROLS --- */
         .top-bar {
-            height: 50px;
+            height: 60px;
             display: flex;
             align-items: center;
-            margin-bottom: 15px;
-            padding-left: 10px;
             justify-content: space-between;
+            margin-bottom: 15px;
+            gap: 20px;
         }
 
-        .lens-group { display: flex; align-items: center; }
-        
+        .left-controls {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
         .lens {
             width: 50px;
             height: 50px;
@@ -61,25 +61,45 @@
             border-radius: 50%;
             border: 4px solid white;
             box-shadow: 0 0 15px #5dcaff;
-            margin-right: 20px;
             animation: pulse 4s infinite;
         }
 
-        .lights { display: flex; gap: 10px; }
-        .light { width: 15px; height: 15px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.2); }
-        .red { background-color: #ff3c3c; box-shadow: 0 0 5px #ff3c3c; }
-        .yellow { background-color: #ffe600; box-shadow: 0 0 5px #ffe600; }
-        .green { background-color: #3cff3c; box-shadow: 0 0 5px #3cff3c; }
-
-        /* --- RECHERCHE --- */
-        .search-container {
-            flex: 1;
+        /* BOUTONS DE FILTRE */
+        .filter-group {
             display: flex;
-            justify-content: flex-end;
-            padding-right: 20px;
+            gap: 10px;
+            background: #89061C;
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5);
         }
+
+        .filter-btn {
+            background: #DC0A2D;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            font-family: 'Press Start 2P';
+            font-size: 0.5rem;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover { color: #fff; }
         
-        #search-input {
+        .filter-btn.active {
+            background: var(--screen-bg);
+            color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .filter-btn.shiny-mode.active {
+            color: var(--gold);
+            box-shadow: 0 0 10px var(--gold);
+        }
+
+        .search-container input {
             background: #232323;
             border: 2px solid #555;
             color: var(--neon-blue);
@@ -87,12 +107,11 @@
             font-size: 0.6rem;
             padding: 10px;
             border-radius: 5px;
-            width: 250px;
+            width: 200px;
             outline: none;
             text-transform: uppercase;
         }
-        #search-input::placeholder { color: #555; }
-        #search-input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
+        .search-container input:focus { border-color: var(--neon-blue); }
 
         /* --- ECRAN PRINCIPAL --- */
         .screen-container {
@@ -102,11 +121,11 @@
             padding: 20px;
             display: flex;
             gap: 20px;
-            box-shadow: inset 5px 5px 15px rgba(0,0,0,0.3);
             overflow: hidden;
+            box-shadow: inset 5px 5px 15px rgba(0,0,0,0.3);
         }
 
-        /* --- ZONE GRILLE --- */
+        /* --- GRILLE (GAUCHE) --- */
         .grid-area {
             flex: 3;
             background-color: var(--screen-bg);
@@ -129,267 +148,299 @@
             border-radius: 8px;
             padding: 8px;
             text-align: center;
-            transition: all 0.2s ease;
-            position: relative;
             border: 1px solid #444;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            height: 110px;
+            height: 120px;
+            position: relative;
+            
+            /* Animation fluide */
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                        border-color 0.2s ease, 
+                        box-shadow 0.2s ease,
+                        opacity 0.3s ease;
+            cursor: pointer;
         }
 
-        .poke-card:hover { transform: translateY(-2px); border-color: #777; }
+        /* --- MINI ZOOM (ANIMATION) --- */
+        .poke-card:hover {
+            transform: scale(1.08); 
+            border-color: #888;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            z-index: 10;
+            background: rgba(255,255,255,0.1);
+        }
 
         .poke-card.unknown img { filter: brightness(0) invert(0.2); opacity: 0.5; }
         .poke-card.unknown .poke-name { color: #555; font-size: 0.45rem; }
-        .poke-card.unknown .poke-id { color: #444; }
 
+        /* CAPTURE */
         .poke-card.caught {
-            background: linear-gradient(135deg, rgba(60, 60, 60, 0.8), rgba(30, 30, 30, 0.9));
-            border: 1px solid var(--gold);
-            box-shadow: 0 0 8px rgba(255, 203, 5, 0.15);
+            background: linear-gradient(135deg, #333, #222);
+            border: 1px solid #777;
+        }
+        .poke-card.caught:hover {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
         }
         .poke-card.caught img { filter: none; transform: scale(1.1); }
-        .poke-card.caught .poke-name {
-            color: var(--gold);
-            text-shadow: 0 2px 2px rgba(0,0,0,0.8);
+        .poke-card.caught .poke-name { color: #fff; }
+
+        /* SHINY */
+        .poke-card.shiny {
+            border: 2px solid var(--gold);
+            background: linear-gradient(135deg, #443300, #222);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+            animation: shinyPulse 2s infinite alternate;
+        }
+        .poke-card.shiny:hover {
+            transform: scale(1.15) rotate(2deg);
+            box-shadow: 0 0 25px var(--gold);
+        }
+        .poke-card.shiny::after {
+            content: '✨';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 12px;
         }
 
         .poke-img { width: 60px; height: 60px; image-rendering: pixelated; object-fit: contain; }
-        
-        .poke-info { width: 100%; }
-        .poke-id { font-family: 'Press Start 2P'; font-size: 0.4rem; color: #888; margin-bottom: 4px; display: block;}
-        .poke-name { font-family: 'Press Start 2P'; font-size: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        .poke-id { font-family: 'Press Start 2P'; font-size: 0.4rem; color: #888; display: block; margin-bottom: 5px;}
+        .poke-name { font-family: 'Press Start 2P'; font-size: 0.5rem; display: block; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;}
 
         .captor-badge {
             position: absolute;
-            top: -5px;
-            right: -5px;
-            width: 20px;
-            height: 20px;
+            top: -8px;
+            right: -8px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            border: 2px solid var(--gold);
+            border: 2px solid #fff;
             display: none;
             background: #000;
-        }
-        .poke-card.caught .captor-badge { display: block; }
-
-        /* --- ZONE FEED --- */
-        .feed-area {
-            flex: 1;
-            background-color: #333;
-            border-radius: 8px;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            border: 2px solid #555;
-            min-width: 250px;
-        }
-
-        .feed-title {
-            color: #fff;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 0.7rem;
-            margin-bottom: 15px;
-            text-align: center;
-            border-bottom: 2px solid var(--pokedex-red);
-            padding-bottom: 10px;
-        }
-
-        .feed-list { flex: 1; overflow-y: auto; font-size: 0.8rem; scrollbar-width: none;}
-        
-        .feed-item {
-            background: rgba(0,0,0,0.3);
-            margin-bottom: 8px;
-            padding: 8px;
-            border-radius: 4px;
-            border-left: 3px solid var(--neon-blue);
-            color: #ddd;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideIn 0.3s ease-out;
-        }
-        .feed-item span { font-weight: bold; color: var(--gold); }
-
-        @keyframes pulse { 0% { box-shadow: 0 0 10px #5dcaff; } 50% { box-shadow: 0 0 25px #5dcaff; } 100% { box-shadow: 0 0 10px #5dcaff; } }
-        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-
-        .sticker {
-            position: absolute;
-            bottom: 20px;
-            right: 40px;
-            transform: rotate(-5deg);
-            background: #f1f1f1;
-            color: #000;
-            padding: 5px 10px;
-            font-family: 'Arial Black', sans-serif;
-            font-weight: bold;
-            box-shadow: 2px 2px 5px rgba(0,0,0,0.3);
             z-index: 10;
         }
+        .poke-card.caught .captor-badge { display: block; }
+        .poke-card.shiny .captor-badge { border-color: var(--gold); }
+
+        /* --- COLONNE DE DROITE --- */
+        .right-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 260px;
+        }
+
+        .panel {
+            background-color: #333;
+            border-radius: 8px;
+            padding: 10px;
+            border: 2px solid #555;
+            display: flex;
+            flex-direction: column;
+        }
+        .panel-title {
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.6rem;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 2px solid var(--pokedex-red);
+            padding-bottom: 5px;
+        }
+
+        /* LEADERBOARD */
+        .leaderboard-list { flex: 1; }
+        .leader-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 5px; margin-bottom: 5px;
+            background: rgba(0,0,0,0.2); border-radius: 4px; color: #fff; font-size: 0.8rem;
+        }
+        .leader-rank { font-weight: bold; color: var(--gold); width: 20px; }
+        .leader-score { font-family: 'Press Start 2P'; font-size: 0.6rem; color: var(--neon-blue); }
+
+        /* FEED */
+        .feed-area { flex: 1; overflow-y: auto; }
+        .feed-item {
+            font-size: 0.75rem; margin-bottom: 6px; color: #bbb;
+            border-left: 2px solid var(--neon-blue); padding-left: 5px;
+        }
+        .feed-item b { color: var(--gold); }
+
+        @keyframes shinyPulse { from { box-shadow: 0 0 5px var(--gold); } to { box-shadow: 0 0 20px var(--gold); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 10px #5dcaff; } 50% { box-shadow: 0 0 25px #5dcaff; } 100% { box-shadow: 0 0 10px #5dcaff; } }
+
     </style>
 </head>
 <body>
 
     <div class="pokedex-device">
         <div class="top-bar">
-            <div class="lens-group">
+            <div class="left-controls">
                 <div class="lens"></div>
-                <div class="lights">
-                    <div class="light red"></div>
-                    <div class="light yellow"></div>
-                    <div class="light green"></div>
+                <div class="filter-group">
+                    <button class="filter-btn active" id="btn-all" onclick="setMode('all')">GLOBAL</button>
+                    <button class="filter-btn shiny-mode" id="btn-shiny" onclick="setMode('shiny')">SHINYS ✨</button>
                 </div>
             </div>
+            
             <div class="search-container">
-                <input type="text" id="search-input" placeholder="Rechercher...">
+                <input type="text" id="search-input" placeholder="RECHERCHE...">
             </div>
         </div>
 
         <div class="screen-container">
             <div class="grid-area">
-                <div class="pokemon-grid" id="grid">
-                    </div>
+                <div class="pokemon-grid" id="grid"></div>
             </div>
 
-            <div class="feed-area">
-                <div class="feed-title">LIVE FEED</div>
-                <div class="feed-list" id="feed">
-                    </div>
+            <div class="right-column">
+                <div class="panel" style="height: 180px;">
+                    <div class="panel-title">TOP CHASSEURS</div>
+                    <div class="leaderboard-list" id="leaderboard"></div>
+                </div>
+                <div class="panel" style="flex: 1;">
+                    <div class="panel-title">LIVE FEED</div>
+                    <div class="feed-area" id="feed"></div>
+                </div>
             </div>
         </div>
-        
-        <div class="sticker">SERVER 2026</div>
     </div>
 
     <script>
-        // CONFIGURATION
         const totalPokemon = 1025; 
         const grid = document.getElementById('grid');
         const feed = document.getElementById('feed');
+        const leaderboardDiv = document.getElementById('leaderboard');
         const searchInput = document.getElementById('search-input');
+        
+        // ETAT ACTUEL
+        let currentMode = 'all'; // 'all' ou 'shiny'
 
-        // --- 1. INITIALISATION DE LA GRILLE VIDE ---
+        // 1. CRÉATION GRILLE
         function initGrid() {
             const fragment = document.createDocumentFragment();
-
             for (let i = 1; i <= totalPokemon; i++) {
                 const card = document.createElement('div');
                 card.className = 'poke-card unknown';
                 card.id = `poke-${i}`;
                 card.dataset.id = i;
                 
-                // Image Lazy Loaded
-                const img = document.createElement('img');
-                img.loading = "lazy"; 
-                img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i}.png`;
-                img.className = 'poke-img';
-                
-                // Info
-                const info = document.createElement('div');
-                info.className = 'poke-info';
-
-                const idSpan = document.createElement('span');
-                idSpan.className = 'poke-id';
-                idSpan.innerText = `#${i.toString().padStart(4, '0')}`;
-
-                const name = document.createElement('span');
-                name.className = 'poke-name';
-                name.innerText = `???`; 
-
-                // Badge Joueur
-                const badge = document.createElement('img');
-                badge.className = 'captor-badge';
-                badge.src = '';
-
-                info.appendChild(idSpan);
-                info.appendChild(name);
-                card.appendChild(badge);
-                card.appendChild(img);
-                card.appendChild(info);
+                card.innerHTML = `
+                    <div class="captor-badge-container"></div>
+                    <span class="poke-id">#${i.toString().padStart(4, '0')}</span>
+                    <img class="poke-img" loading="lazy" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${i}.png">
+                    <span class="poke-name">???</span>
+                `;
                 fragment.appendChild(card);
             }
             grid.appendChild(fragment);
         }
 
-        // --- 2. BARRE DE RECHERCHE ---
-        searchInput.addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
+        // 2. LOGIQUE DE FILTRAGE
+        function refreshGrid() {
+            const searchVal = searchInput.value.toLowerCase();
             const cards = document.querySelectorAll('.poke-card');
-            
+
             cards.forEach(card => {
                 const name = card.querySelector('.poke-name').innerText.toLowerCase();
                 const id = card.dataset.id;
+                const isShiny = card.classList.contains('shiny');
+                const isCaught = card.classList.contains('caught');
+
+                // Filtre 1: Recherche texte
+                const matchSearch = name.includes(searchVal) || id.includes(searchVal);
                 
-                if(name.includes(val) || id.includes(val) || (val === 'caught' && card.classList.contains('caught'))) {
+                // Filtre 2: Mode Shiny
+                // Si on est en mode 'shiny', on ne montre QUE ceux qui ont la classe .shiny
+                const matchMode = (currentMode === 'all') || (currentMode === 'shiny' && isShiny);
+
+                if (matchSearch && matchMode) {
                     card.style.display = 'flex';
                 } else {
                     card.style.display = 'none';
                 }
             });
-        });
-
-        // --- 3. FONCTION D'AFFICHAGE DE CAPTURE ---
-        function updateDisplay(id, playerName, pokemonName) {
-            const card = document.getElementById(`poke-${id}`);
-            if(card) {
-                // On met à jour l'affichage de la carte
-                // On check si c'était inconnu avant de faire l'animation, sinon on update juste le nom si besoin
-                if (card.classList.contains('unknown')) {
-                    card.classList.remove('unknown');
-                    card.classList.add('caught');
-                    
-                    // Nom & Badge
-                    card.querySelector('.poke-name').innerText = pokemonName;
-                    const badge = card.querySelector('.captor-badge');
-                    badge.src = `https://minotar.net/avatar/${playerName}/100.png`;
-                }
-            }
         }
 
-        function addLog(playerName, pokemonName, id) {
+        function setMode(mode) {
+            currentMode = mode;
+            
+            // Update Boutons UI
+            document.getElementById('btn-all').classList.toggle('active', mode === 'all');
+            document.getElementById('btn-shiny').classList.toggle('active', mode === 'shiny');
+
+            refreshGrid();
+        }
+
+        searchInput.addEventListener('input', refreshGrid);
+
+        // 3. MISE A JOUR CARTE
+        function updateDisplay(data) {
+            const card = document.getElementById(`poke-${data.id}`);
+            if(!card) return;
+
+            card.classList.remove('unknown');
+            card.classList.add('caught');
+
+            if (data.isShiny) {
+                card.classList.add('shiny');
+            }
+
+            card.querySelector('.poke-name').innerText = data.name;
+            const badgeContainer = card.querySelector('.captor-badge-container');
+            badgeContainer.innerHTML = `<img class="captor-badge" src="https://minotar.net/avatar/${data.captor}/50.png" title="Capturé par ${data.captor}">`;
+
+            // Si on est en mode shiny et qu'un shiny vient d'arriver, on rafraichit la vue
+            if (currentMode === 'shiny') refreshGrid();
+        }
+
+        // 4. LEADERBOARD & LOGS
+        function updateLeaderboard(leaders) {
+            leaderboardDiv.innerHTML = "";
+            leaders.forEach((player, index) => {
+                const div = document.createElement('div');
+                div.className = 'leader-item';
+                div.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="leader-rank">${index + 1}</span>
+                        <img src="https://minotar.net/avatar/${player.name}/20.png" style="border-radius:50%">
+                        <span>${player.name}</span>
+                    </div>
+                    <span class="leader-score">${player.score}</span>
+                `;
+                leaderboardDiv.appendChild(div);
+            });
+        }
+
+        function addLog(data) {
             const item = document.createElement('div');
             item.className = 'feed-item';
-            
-            const thumb = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
-            
-            item.innerHTML = `
-                <img src="https://minotar.net/avatar/${playerName}/20.png" style="border-radius:50%">
-                <div style="display:flex; flex-direction:column; gap:2px;">
-                    <span style="font-size:0.7rem; color:#aaa;">${playerName}</span>
-                    <div style="display:flex; align-items:center; gap:5px;">
-                        a trouvé <span style="color:var(--gold);">#${id.toString().padStart(4, '0')} ${pokemonName}</span>
-                        <img src="${thumb}" style="width:20px; height:20px;">
-                    </div>
-                </div>
-            `;
+            const shinyText = data.isShiny ? "✨ SHINY ✨" : "";
+            item.innerHTML = `<b>${data.captor}</b> a attrapé <b>${data.name}</b> ${shinyText}`;
             feed.prepend(item);
         }
 
-        // --- 4. CONNEXION AU BACKEND (Socket.io) ---
-        // C'est ici que la magie opère !
-        
-        initGrid(); // On crée d'abord la grille vide
-
+        // --- SOCKET.IO ---
+        initGrid();
         const socket = io();
 
-        // A. Au chargement, on reçoit la liste des captures existantes
-        socket.on('init-pokedex', (allCaptures) => {
-            console.log("Chargement des données existantes...");
-            // allCaptures est un objet { "150": {id:150, name:"Mewtwo", ...}, ... }
-            for (const key in allCaptures) {
-                const p = allCaptures[key];
-                updateDisplay(p.id, p.captor, p.name);
+        socket.on('init-pokedex', (payload) => {
+            const { captures, leaderboard } = payload;
+            for (const key in captures) {
+                updateDisplay(captures[key]);
             }
+            updateLeaderboard(leaderboard);
         });
 
-        // B. Quand quelqu'un capture en direct
-        socket.on('new-capture', (data) => {
-            console.log("Nouvelle capture reçue !", data);
-            updateDisplay(data.id, data.captor, data.name);
-            addLog(data.captor, data.name, data.id);
+        socket.on('new-capture', (payload) => {
+            const { pokemon, leaderboard } = payload;
+            updateDisplay(pokemon);
+            addLog(pokemon);
+            updateLeaderboard(leaderboard);
         });
 
     </script>
